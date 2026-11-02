@@ -1679,15 +1679,18 @@ function qPush(k,x){try{const a=JSON.parse(load(k)||'[]');a.push(x);save(k,JSON.
 async function qFlush(){if(!SB)return;for(const [k,fn] of [['rptq','report_question'],['fbq','submit_feedback']]){let a=[];try{a=JSON.parse(load(k)||'[]');}catch(e){}if(!a.length)continue;const left=[];for(const x of a){try{await sbRpc(fn,x);}catch(e){left.push(x);}}save(k,JSON.stringify(left));}}
 function sendReport(c,q,n,m){const x={c:String(c||''),qq:String(q||''),n:String(n||''),m:String(m||'')};if(SB)sbRpc('report_question',x).catch(()=>qPush('rptq',x));else qPush('rptq',x);}
 function reportLink(c,q,m){const sent=RPT_SENT.has(q);if(sent)return h('p',{class:'small muted rpt-ok'},'وصل بلاغك، شكراً 🙏');
-  return h('details',{class:'rpt'},h('summary',null,'فيه خطأ في السؤال؟ بلّغنا'),
-    h('div',{class:'stack',style:'gap:8px'},h('textarea',{class:'rpt-n',maxlength:300,rows:2,placeholder:'وش الخطأ؟ (اختياري)'}),
-      h('button',{class:'btn line sm',type:'button',onclick:e=>{const box=e.target.closest('details');const n=(box.querySelector('textarea')||{}).value||'';sendReport(c,q,n,m);RPT_SENT.add(q);render();}},'أرسل البلاغ')));}
-const RPT_SENT=new Set();
+  const d=RPT_DRAFT[q]||(RPT_DRAFT[q]={open:false,n:''});
+  const box=h('details',{class:'rpt'},h('summary',null,'فيه خطأ في السؤال؟ بلّغنا'),
+    h('div',{class:'stack',style:'gap:8px'},h('textarea',{class:'rpt-n',maxlength:300,rows:2,placeholder:'وش الخطأ؟ (اختياري)',text:d.n,oninput:e=>{d.n=e.target.value;}}),
+      h('button',{class:'btn line sm',type:'button',onclick:()=>{sendReport(c,q,d.n,m);RPT_SENT.add(q);render();}},'أرسل البلاغ')));
+  if(d.open)box.open=true;box.addEventListener('toggle',()=>{d.open=box.open;});return box;}
+const RPT_SENT=new Set(),RPT_DRAFT={},FB_DRAFT={};
 function fbCard(m){const k='fb-'+m+'-'+rDay();if(load(k))return h('p',{class:'small muted',style:'text-align:center'},'شكراً على تقييمك 💛');
-  let stars=0;const row=h('div',{class:'fb-stars'},[1,2,3,4,5].map(n=>h('button',{class:'fb-s',type:'button','aria-label':toAr(n)+' نجوم',onclick:e=>{stars=n;[...row.children].forEach((b,i)=>b.classList.toggle('on',i<n));}},'★')));
+  const d=FB_DRAFT[m]||(FB_DRAFT[m]={s:0,n:''});
+  const row=h('div',{class:'fb-stars'},[1,2,3,4,5].map(n=>h('button',{class:'fb-s'+(n<=d.s?' on':''),type:'button','aria-label':toAr(n)+' نجوم',onclick:()=>{d.s=n;[...row.children].forEach((b,i)=>b.classList.toggle('on',i<n));}},'★')));
   return h('div',{class:'card fb'},h('h3',null,'وش رأيك في الجلسة؟'),row,
-    h('textarea',{class:'fb-n',maxlength:500,rows:2,placeholder:'وش عجبك ووش نحسّن؟ (اختياري)'}),
-    h('button',{class:'btn line sm',type:'button',onclick:e=>{if(!stars){flash='اختر عدد النجوم أول.';render();return;}const n=(e.target.closest('.fb').querySelector('textarea')||{}).value||'';const x={m,s:stars,n};if(SB)sbRpc('submit_feedback',x).catch(()=>qPush('fbq',x));else qPush('fbq',x);save(k,'1');flash='';render();}},'أرسل'));}
+    h('textarea',{class:'fb-n',maxlength:500,rows:3,placeholder:'وش عجبك؟ ووش المشاكل اللي واجهتكم؟ (اختياري)',text:d.n,oninput:e=>{d.n=e.target.value;}}),
+    h('button',{class:'btn line sm',type:'button',onclick:()=>{if(!d.s){flash='اختر عدد النجوم أول.';render();return;}const x={m,s:d.s,n:d.n};if(SB)sbRpc('submit_feedback',x).catch(()=>qPush('fbq',x));else qPush('fbq',x);save(k,'1');flash='';render();}},'أرسل'));}
 const ZOOMS=[1,1.12,0.9];let zoomI=+(load('zoom')||0)||0;
 function applyZoom(){try{const a=document.getElementById('app');if(a)a.style.zoom=ZOOMS[zoomI%ZOOMS.length];}catch(e){}}
 function zoomBtn(){return h('button',{class:'btn icon',type:'button','aria-label':'حجم الخط',onclick:()=>{zoomI=(zoomI+1)%ZOOMS.length;save('zoom',String(zoomI));applyZoom();}},ZOOMS[zoomI%ZOOMS.length]>1?'أ أ':ZOOMS[zoomI%ZOOMS.length]<1?'أ':'أ+');}
