@@ -741,6 +741,7 @@ function vHome(){
         h('span',{class:'mode-top'},h('span',{class:'mode-badge',style:'color:#7a9a1f'},ico('smile',38)),h('span',{class:'mode-name'},'على راسك')),
         h('span',{class:'mode-sub'},'الجوال على جبينك، وأصحابك يشرحون لك الكلمة. خمّن قبل لا يخلص الوقت.'),
         h('span',{class:'mode-meta'},'لاعبين وفوق — جوال واحد'))),
+    installCard(),
     ugcCard(false),
     h('p',{class:'fresh-note'},h('span',{class:'tag red'},'جديد'),' أسئلة جديدة كل أسبوعين، تنزل للمشتركين أول — آخر تحديث '+arDate(FRESH_DATE)),
     h('div',{class:'sadu'}),
@@ -1888,6 +1889,19 @@ function seasonPicker(){const pv=load('season')||'';const set=v=>{save('season',
 
 /* حملة «صوّر شلتك»: تتفعّل للجمهور بعد ترخيص العرض الترويجي من وزارة التجارة */
 const UGC_ON=true,UGC_TAG='#شلتنا',UGC_HANDLE='';
+
+/* ---------- تثبيت على الشاشة الرئيسية ---------- */
+let INSTALL_EVT=null;try{window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();INSTALL_EVT=e;if(view==='home')render();});}catch(e){}
+function installCard(){try{
+  if(window.claude||!SHARE_URL)return null;
+  const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+  const mobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if(standalone||!mobile||load('noinstall'))return null;
+  const ios=/iPhone|iPad|iPod/i.test(navigator.userAgent);
+  return h('div',{class:'card install'},h('h3',null,'📲 خلّ شلّتنا على شاشتك'),
+    h('p',{class:'small muted'},INSTALL_EVT?'تفتح مثل التطبيق، بدون تحميل من المتجر.':ios?'من Safari: اضغط زر المشاركة ⬆️ تحت، ثم «إضافة إلى الشاشة الرئيسية».':'من قائمة المتصفح ⋮ اختر «إضافة إلى الشاشة الرئيسية».'),
+    h('div',{class:'row'},INSTALL_EVT?h('button',{class:'btn gold sm',type:'button',onclick:async()=>{try{INSTALL_EVT.prompt();await INSTALL_EVT.userChoice;}catch(e){}INSTALL_EVT=null;save('noinstall','1');render();}},'ثبّتها'):null,
+      h('button',{class:'btn line sm',type:'button',onclick:()=>{save('noinstall','1');render();}},'لاحقاً')));}catch(e){return null;}}
 function ugcCard(after){if(!UGC_ON)return null;
   const msg='صوّرنا جلستنا وحنا نلعب «شلّتنا» 🔥\n'+UGC_TAG+(UGC_HANDLE?' '+UGC_HANDLE:'');
   return h('div',{class:'card ugc'+(after?' after':'')},
@@ -2034,5 +2048,6 @@ try{const qp=new URLSearchParams(location.search);const lg=(qp.get('lg')||'').re
 try{sbInit();}catch(e){}try{applyZoom();}catch(e){}
 </script>
 
+<script>if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});</script>
 </body>
 </html>
