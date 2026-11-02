@@ -824,7 +824,7 @@ function vHeadsSetup(){
     h('div',{class:'card'},h('h2',null,'اختاروا الباقة'),h('div',{class:'row'},Object.keys(HDECKS).map((k,i)=>h('button',{class:'chip'+(hDeck===k?' on':''),type:'button',style:'--cc:var(--lime)'+(hDeck===k?';color:var(--night)':''),onclick:()=>{hDeck=k;render();}},k+' ('+toAr(HDECKS[k].length)+')'+(seasonFree(k)?' 🌙':i>=FREE_N?' ★':'')))),h('p',{class:'small muted',style:'margin-top:8px'},FREE_NOTE)),
     h('div',{class:'card'},optPicker('وقت الدور',[60,90,45],hSecs,v=>hSecs=v,v=>toAr(v)+' ثانية'),
       h('label',{style:'display:flex;flex-direction:row;flex-wrap:nowrap;gap:10px;align-items:center;margin-top:10px;font-size:14px'},h('input',{type:'checkbox',id:'htilt',style:'width:22px;height:22px;flex:0 0 auto;margin:0',checked:hTilt,onchange:e=>{hTilt=e.target.checked;}}),'تحكم بالميلان (تجريبي): لتحت = صح، لفوق = تخطي')),
-    h('div',{class:'card'},h('label',{for:'hname'},'مين عليه الدور؟'),h('input',{id:'hname',maxlength:16,placeholder:'اسم اللاعب (اختياري)'})),
+    h('div',{class:'card'},h('label',{for:'hname'},'مين عليه الدور؟'),h('input',{id:'hname',maxlength:16,placeholder:'مثلاً: محمد (اختياري)'})),
     Object.keys(hScores).length?scoreBlock(Object.entries(hScores).map(([n,s])=>({n,s})),'نتايج الجلسة'):null,
     h('button',{class:'btn',type:'button',id:'hstart',style:'background:var(--lime);color:var(--night);box-shadow:0 5px 0 #8fb03a',onclick:hStart},'جاهز؟ ابدأ'));
 }
@@ -854,13 +854,13 @@ function vOutsiderSetup(){
     h('h2',{style:'font-size:40px;color:var(--rose)'},'مين الغريب؟'),
     h('p',{class:'muted'},'كلكم تعرفون السالفة إلا واحد. اسألوا بعض أسئلة ذكية، واكشفوا الغريب قبل لا يعرف السالفة.'),
     h('div',{class:'card'},h('h2',null,'مين بيلعب؟'),
-      h('form',{class:'row',onsubmit:e=>{e.preventDefault();add();}},h('input',{id:'oname',maxlength:16,placeholder:'اسم اللاعب',style:'flex:1 1 160px'}),h('button',{class:'btn gold sm',type:'submit'},'أضف')),
+      h('form',{class:'row',onsubmit:e=>{e.preventDefault();add();}},h('input',{id:'oname',maxlength:16,placeholder:'مثلاً: محمد',style:'flex:1 1 160px'}),h('button',{class:'btn gold sm',type:'submit'},'أضف')),
       localNames.length?h('div',{class:'players'},localNames.map((n,i)=>h('button',{class:'pbtn',type:'button',onclick:()=>{localNames.splice(i,1);render();}},tok(i,n),h('span',{class:'t'},h('span',{class:'n',text:n}),h('span',{class:'s'},'اضغط للحذف'))))):h('p',{class:'small muted'},'أضف ٣ لاعبين على الأقل.')),
     h('div',{class:'card'},h('h2',null,'وش السالفة؟'),h('div',{class:'row'},Object.keys(OUT_TOPICS).map((k,i)=>h('button',{class:'chip'+(outTopic===k?' on':''),type:'button',style:'--cc:var(--rose)'+(outTopic===k?';color:var(--night)':''),onclick:()=>{outTopic=k;render();}},k+(seasonFree(k)?' 🌙':i>=FREE_N?' ★':'')))),h('p',{class:'small muted',style:'margin-top:8px'},FREE_NOTE)),
     h('div',{class:'card'},
       h('h2',null,'أو كل واحد بجواله'),
       h('p',{class:'small muted'},'أنشئ غرفة، والباقين يفتحون نفس الرابط ويدخلون الكود. كل واحد يشوف سالفته في جواله بدون ما يلف الجوال.'),
-      h('div',{class:'stack'},h('label',{for:'nm'},'اسمك في اللعبة'),h('input',{id:'nm',maxlength:16,placeholder:'مثلاً: أبو ناجي',value:myName,oninput:e=>{myName=e.target.value;save('name',myName);}})),
+      h('div',{class:'stack'},h('label',{for:'nm'},'اسمك في اللعبة'),h('input',{id:'nm',maxlength:16,placeholder:'مثلاً: محمد',value:myName,oninput:e=>{myName=e.target.value;save('name',myName);}})),
       onlineStatus==='off'?h('p',{class:'note'},'اللعب بالجوالات يحتاج حساب مدعو للصفحة في هذا النموذج. الجوال الواحد يشتغل لأي أحد.'):null,
       h('button',{class:'btn teal',type:'button',id:'ocreate',disabled:onlineStatus!=='ready'||busy,onclick:()=>{roomGame='out';createRoom();}},'أنشئ غرفة'),
       h('div',{class:'row'},h('input',{id:'code',inputmode:'numeric',maxlength:4,placeholder:'كود الغرفة',style:'flex:1 1 120px;direction:ltr;text-align:center'}),
@@ -909,7 +909,7 @@ function vLocalSetup(){
     h('div',{class:'card'},
       h('h2',null,'كل واحد بجواله (الأفضل)'),
       h('p',{class:'small muted'},'أنشئ غرفة، والباقين يفتحون نفس الرابط ويدخلون الكود. كل واحد يكتب جوابه في جواله وبنفس الوقت.'),
-      h('div',{class:'stack'},h('label',{for:'nm'},'اسمك في اللعبة'),h('input',{id:'nm',maxlength:16,placeholder:'مثلاً: أبو ناجي',value:myName,oninput:e=>{myName=e.target.value;save('name',myName);}})),
+      h('div',{class:'stack'},h('label',{for:'nm'},'اسمك في اللعبة'),h('input',{id:'nm',maxlength:16,placeholder:'مثلاً: محمد',value:myName,oninput:e=>{myName=e.target.value;save('name',myName);}})),
       onlineStatus==='checking'?h('p',{class:'note'},'نتحقق من اللعب أونلاين…'):null,
       onlineStatus==='off'?h('p',{class:'note'},'اللعب أونلاين في هذا النموذج يشتغل لمن يفتح الصفحة بحساب Claude مدعو لها. الجوال الواحد يشتغل لأي أحد.'):null,
       h('button',{class:'btn teal',type:'button',disabled:onlineStatus!=='ready'||busy,onclick:()=>{roomGame='wave';createRoom();}},'أنشئ غرفة'),
@@ -919,7 +919,7 @@ function vLocalSetup(){
     crowdPicker(),
     h('div',{class:'card'},h('h2',null,'مين بيلعب؟'),
       h('form',{class:'row',onsubmit:e=>{e.preventDefault();add();}},
-        h('input',{id:'pname',maxlength:16,placeholder:'اسم اللاعب',style:'flex:1 1 160px'}),
+        h('input',{id:'pname',maxlength:16,placeholder:'مثلاً: محمد',style:'flex:1 1 160px'}),
         h('button',{class:'btn gold sm',type:'submit',id:'addp'},'أضف')),
       localNames.length?h('div',{class:'players'},localNames.map((n,i)=>h('button',{class:'pbtn',type:'button','aria-label':'احذف '+n,onclick:()=>{localNames.splice(i,1);render();}},tok(i,n),h('span',{class:'t'},h('span',{class:'n',text:n}),h('span',{class:'s'},'اضغط للحذف'))))):h('p',{class:'small muted'},'أضف لاعبين اثنين على الأقل.')),
     h('div',{class:'card'},
@@ -1806,7 +1806,7 @@ function lgInvite(){shareResult('انضم لشلتي في «تحدي اليوم�
 function lgBox(){
   if(!LG.code){
     return h('div',{class:'card lg'},h('h2',null,'🏆 تحدي الشلة'),h('p',{class:'muted small'},'سوّ شلة لقروبك، وكل أسبوع نشوف مين يتصدر تحدي اليوم.'),
-      myName.trim()?null:h('input',{id:'lgname',placeholder:'اسمك',maxlength:'16',value:myName,oninput:e=>{myName=e.target.value;save('name',myName);}}),
+      myName.trim()?null:h('input',{id:'lgname',placeholder:'مثلاً: محمد',maxlength:'16',value:myName,oninput:e=>{myName=e.target.value;save('name',myName);}}),
       h('button',{class:'btn gold',type:'button',id:'lgnew',onclick:()=>{if(!myName.trim()){flash='اكتب اسمك أول.';render();return;}if(SB){sbRpc('set_name',{n:myName.trim().slice(0,16)}).then(()=>sbRpc('create_league')).then(c=>{lgSetCode(c);lgInvite();}).catch(()=>{flash='ما قدرنا نسوي الشلة الحين.';render();});return;}lgSetCode(String(Math.floor(100000+Math.random()*900000)));lgInvite();}},'سوّ شلة جديدة'),
       h('div',{class:'lgjoin'},h('input',{id:'lgcode',inputmode:'numeric',placeholder:'كود الشلة',maxlength:'6'}),
         h('button',{class:'btn line',type:'button',id:'lgjoin',onclick:()=>{const c=(($('#lgcode')||{}).value||'').replace(/[٠-٩]/g,d=>String('٠١٢٣٤٥٦٧٨٩'.indexOf(d))).replace(/\D/g,'');if(!myName.trim()){flash='اكتب اسمك أول.';render();return;}if(c.length!==6){flash='كود الشلة ٦ أرقام.';render();return;}lgSetCode(c);}},'ادخل')));}
