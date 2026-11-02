@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#170C2A"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><meta property="og:title" content="شلّتنا — ألعاب المجلس في رابط واحد"><meta property="og:description" content="تحدي يومي، دوري للشلة، وتحدي الفرق. العبوا من أي جوال بدون تحميل."><meta property="og:image" content="og.png">
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#170C2A"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><meta property="og:title" content="شلّتنا — ألعاب المجلس في رابط واحد"><meta property="og:description" content="تحدي يومي، دوري للشلة، وتحدي الفرق. العبوا من أي جوال بدون تحميل."><meta property="og:image" content="https://shillatnasa.github.io/shillatna/og.png"><meta property="og:url" content="https://shillatnasa.github.io/shillatna/"><meta property="og:type" content="website"><meta property="og:locale" content="ar_SA"><meta name="twitter:card" content="summary_large_image"><meta name="description" content="ألعاب المجلس في رابط واحد: تحدي يومي، دوري للشلة، وتحدي الفرق. العبوا من أي جوال بدون تحميل.">
 <title>شلّتنا</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -986,6 +986,18 @@ function localReveal(){
 }
 
 /* ---------- Online ---------- */
+
+/* ---------- غرف أونلاين عبر Supabase Realtime (خارج Claude) ---------- */
+const TAB_ID=Math.random().toString(36).slice(2,10)+Date.now().toString(36);
+function sbRoomNS(){return {join:async(name)=>{
+  const ch=SB.channel('room-'+name,{config:{presence:{key:TAB_ID}}});let list=[],cbs=[];
+  const sync=()=>{const st=ch.presenceState();list=Object.entries(st).map(([k,arr])=>({peer:k,sameTab:k===TAB_ID,presence:(arr&&arr.length?arr[arr.length-1].p:null)||null}));cbs.slice().forEach(f=>{try{f();}catch(e){}});};
+  ch.on('presence',{event:'sync'},sync);
+  await new Promise((res,rej)=>{const to=setTimeout(()=>rej(Object.assign(new Error('timeout'),{code:'timeout'})),10000);ch.subscribe(st=>{if(st==='SUBSCRIBED'){clearTimeout(to);res();}else if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'){clearTimeout(to);rej(new Error(st));}});});
+  await ch.track({p:null});
+  return {peers:()=>list,presence:async o=>{const r=await ch.track({p:o});if(r!=='ok')throw new Error('track '+r);},
+    onPeers:(cb,err)=>{cbs.push(cb);return ()=>{cbs=cbs.filter(x=>x!==cb);};},
+    leave:async()=>{try{await ch.untrack();}catch(e){}try{await SB.removeChannel(ch);}catch(e){}}};}};}
 function errMsg(e){const c=e&&e.code;if(c==='not_permitted'||c==='not_granted')return 'حسابك ما يقدر يدخل غرف اللعب هنا. جرّب وضع الجوال الواحد.';if(c==='limit_reached')return 'الغرف مزحومة الحين، جرّب بعد شوي.';return 'صار خطأ في الاتصال. جرّب مرة ثانية.';}
 function myPeer(){const p=G&&G.peers().find(x=>x.sameTab);return p?p.peer:null;}
 let lastPush='';function pushHost(){if(!G||!isHost)return;const js=JSON.stringify(S)+'|'+myName;if(js===lastPush)return;lastPush=js;G.presence({r:'h',n:myName.slice(0,16),s:S}).catch(()=>{lastPush='';});}
@@ -1459,7 +1471,8 @@ function tResolve(w,half){
   if(T.cats.every(c=>c.tiles.every(x=>x.by!==null))){T.ph='end';flash='';timers.push(setTimeout(()=>{SFX.win();confetti();},300));}
   render();window.scrollTo(0,0);
 }
-function shareResult(text){
+async function shareResult(text){
+  try{if(navigator.share&&/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)){await navigator.share({text});return;}}catch(e){if(e&&e.name==='AbortError')return;}
   try{navigator.clipboard.writeText(text).then(()=>{flash='انتسخ النص. الصقه في قروب الواتساب وتحدّوا غيركم.';render();}).catch(()=>{flash=text;render();});}catch(e){flash=text;render();}
 }
 function tTieBreak(){
@@ -1530,7 +1543,7 @@ function privacyBlock(){return h('details',{class:'card how'},h('summary',null,'
     h('li',null,h('b',null,'حذف بياناتك: '),'تقدر تحذف كل بياناتك من هنا متى ما بغيت.')),
   h('button',{class:'btn line sm',type:'button',onclick:e=>sure(e,async()=>{try{if(SB)await sbRpc('delete_my_data');}catch(x){}
     try{Object.keys(localStorage).filter(k=>k.startsWith('nafs-')).forEach(k=>localStorage.removeItem(k));}catch(x){}
-    try{if(SB)await SB.auth.signOut();}catch(x){}SB=null;SB_TRIED=false;if(LG.unsub)LG.unsub();LG={code:'',rows:null,err:'',unsub:null,wk:-1,sent:'',busy:false};myName='';D=null;render();const hb=document.querySelector('.how:last-of-type summary');if(hb)hb.textContent='الخصوصية والشروط — انحذفت بياناتك ✓';})},'احذف بياناتي'));}
+    try{if(SB)await SB.auth.signOut();}catch(x){}SB=null;SB_TRIED=false;SB_P=null;if(LG.unsub)LG.unsub();LG={code:'',rows:null,err:'',unsub:null,wk:-1,sent:'',busy:false};myName='';D=null;render();const hb=document.querySelector('.how:last-of-type summary');if(hb)hb.textContent='الخصوصية والشروط — انحذفت بياناتك ✓';})},'احذف بياناتي'));}
 function creditsBlock(){return h('details',{class:'card how'},h('summary',null,'حقوق الصور'),h('p',{class:'small muted'},'صور المعالم من ويكيميديا كومنز برخص حرة. الأعلام من مكتبة flag-icons (رخصة MIT)، والخرائط من Natural Earth (ملكية عامة).'),h('div',{class:'life-help'},Object.entries(PICS_CRED).map(([k,c])=>h('div',{class:'small'},c[0]+' — '+c[1])),Object.entries(ANS_CRED).map(([k,c])=>h('div',{class:'small'},h('b',null,k+': '),c[0]+' — '+c[1])),Object.entries(PHOTO_CRED).map(([k,c])=>{const q=TRIVIA.find(x=>x.id==='landmarks');const e=q&&[200,400,600].flatMap(l=>q.q[l]).find(x=>x[2]==='lm:'+k);return h('div',{class:'small'},h('b',null,(e?e[1]:k)+': '),c[0]+' — '+c[1]);})));}
 function photoCredit(v){const pm=v&&v.match(/^pic:(\w+)/);if(pm&&PICS_CRED[pm[1]]){const c=PICS_CRED[pm[1]];return h('p',{class:'credit'},'الصورة: '+c[0]+' — '+c[1]+' — ويكيميديا كومنز');}const m=v&&v.match(/^(?:lm:|zoom:lm\.)(\w+)/);const c=m&&PHOTO_CRED[m[1]];return c?h('p',{class:'credit'},'الصورة: '+c[0]+' — '+c[1]+' — ويكيميديا كومنز'):null;}
 function visualOf(v,el){if(!v)return null;const [k,c,d]=v.split(':');
@@ -1714,7 +1727,8 @@ let D=null;
 /* ---------- السيرفر (Supabase) ---------- */
 const SB_URL='https://rdzzzuwrubzpxshnongt.supabase.co',SB_KEY='sb_publishable_8Ii1x8OMIfMunw-75ObBTg_gYpe1YuQ';
 let SB=null,SB_TRIED=false;
-function sbInit(){if(SB_TRIED)return Promise.resolve(SB);SB_TRIED=true;
+let SB_P=null;function sbInit(){if(SB_TRIED&&SB_P)return SB_P;SB_TRIED=true;return SB_P=sbInit0();}
+function sbInit0(){
   if(window.claude||location.protocol==='file:')return Promise.resolve(null);
   return new Promise(res=>{const sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js';
     const to=setTimeout(()=>res(null),8000);
@@ -1739,7 +1753,7 @@ function dPick(o){if(D.picks.length>D.i||D.busy)return;
 function dNext(){D.i++;if(D.i>=D.qs.length){D.done=true;const st=dStreak();if(st.last!==D.day){st.n=(st.last===rDay(-1))?st.n+1:1;st.last=D.day;save('dstreak',JSON.stringify(st));}SFX.win();setTimeout(confetti,200);}dSave();render();window.scrollTo(0,0);}
 function dShareText(){const g=D.qs.map((q,i)=>D.picks[i]===q.a?'🟩':'🟥').join('');const st=dStreak();
   return 'شلّتنا — تحدي اليوم '+dayLabel(D.day)+'\n'+g+'\n'+toAr(dScore())+' من '+toAr(D.qs.reduce((s,q)=>s+q.lv,0))+' نقطة'+(st.n>1?'\n🔥 '+toAr(st.n)+' أيام ورا بعض':'')+'\nتقدر تغلبني؟'+(LG.code?'\nكود شلتي: '+toAr(LG.code):'')+(SHARE_URL?'\n'+SHARE_URL:'');}
-const SHARE_URL='';
+const SHARE_URL=(()=>{try{if(window.claude||!/^https?:$/.test(location.protocol)||/^(localhost|127\.)/.test(location.hostname))return '';return location.origin+location.pathname.replace(/index\.html$/,'');}catch(e){return '';}})();
 
 function dSay(r){return r>=6?'أسطورة الليلة!':r>=4?'حلو! بكرة تكسرها':'بكرة لك ثأر!';}
 async function dImage(){
@@ -1787,7 +1801,7 @@ async function lgWatch(){const wk=lgWeek();if(!LG.code||LG.wk===wk)return;
 function lgTable(){if(SB&&LG.srvRows)return LG.srvRows;const by={};(LG.rows||[]).forEach(r=>{if(!r||typeof r.u!=='string')return;const x=by[r.u]||(by[r.u]={n:'',sc:0,days:0,last:''});x.sc+=Math.max(0,Math.min(2800,+r.sc||0));x.days++;if(String(r.d)>=x.last){x.last=String(r.d);x.n=String(r.n||'لاعب').slice(0,16);}});
   return Object.entries(by).map(([u,x])=>({u,...x})).sort((a,b)=>b.sc-a.sc||b.days-a.days);}
 function lgSetCode(c){LG.code=c;save('league',c);LG.sent='';if(LG.unsub){LG.unsub();LG.unsub=null;}LG.wk=-1;lgWatch();lgSubmit();render();}
-function lgInvite(){shareResult('انضم لشلتي في «تحدي اليوم» على شلّتنا 🌙\nكود الشلة: '+toAr(LG.code)+'\nكل يوم ٧ أسئلة، ونشوف مين يتصدر الأسبوع!'+(SHARE_URL?'\n'+SHARE_URL:''));}
+function lgInvite(){shareResult('انضم لشلتي في «تحدي اليوم» على شلّتنا 🌙\nكود الشلة: '+toAr(LG.code)+'\nكل يوم ٧ أسئلة، ونشوف مين يتصدر الأسبوع!'+(SHARE_URL?'\n'+SHARE_URL+'?lg='+LG.code:''));}
 function lgBox(){
   if(!LG.code){
     return h('div',{class:'card lg'},h('h2',null,'🏆 تحدي الشلة'),h('p',{class:'muted small'},'سوّ شلة لقروبك، وكل أسبوع نشوف مين يتصدر تحدي اليوم.'),
@@ -2008,7 +2022,7 @@ packSel=new Set(CROWD[crowd].packs);tCatSel=new Set(CROWD[crowd].cats);
 render();
 (async()=>{
   try{
-    if(!window.claude||!window.claude.use){onlineStatus='off';render();return;}
+    if(!window.claude||!window.claude.use){const c=await sbInit();if(c){roomNS=sbRoomNS();onlineStatus='ready';}else onlineStatus='off';render();return;}
     roomNS=await window.claude.use('room');
     onlineStatus=roomNS?'ready':'off';
   }catch(e){onlineStatus='off';}
@@ -2016,6 +2030,7 @@ render();
 })();
 
 if(location.hash==='#admin'){view='admin';render();}
+try{const qp=new URLSearchParams(location.search);const lg=(qp.get('lg')||'').replace(/\D/g,'');if(lg.length===6&&LG.code!==lg){sbInit().then(()=>{if(SB)sbRpc('join_league',{c:lg}).catch(()=>{});lgSetCode(lg);view='daily';render();});}}catch(e){}
 try{sbInit();}catch(e){}try{applyZoom();}catch(e){}
 </script>
 
